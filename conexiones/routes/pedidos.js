@@ -2,10 +2,20 @@ const express = require("express");
 const router = express.Router();
 const db = require("../db");
 
+// Middleware interno para proteger rutas administrativas
+const authAdmin = (req, res, next) => {
+    const API_KEY = process.env.ADMIN_API_KEY || "hcars-admin-2024";
+    if (req.headers["x-api-key"] === API_KEY) {
+        return next();
+    }
+    res.status(401).json({ error: "No autorizado" });
+};
+
 // -----------------------------------
 // OBTENER TODOS LOS PEDIDOS
+// Solo Admin
 // -----------------------------------
-router.get("/", async (req, res) => {
+router.get("/", authAdmin, async (req, res) => {
     try {
         const result = await db.query(`
             SELECT * FROM pedidos ORDER BY fecha DESC
@@ -21,7 +31,7 @@ router.get("/", async (req, res) => {
 // -----------------------------------
 // OBTENER ITEMS DE UN PEDIDO
 // -----------------------------------
-router.get("/:id/items", async (req, res) => {
+router.get("/:id/items", authAdmin, async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -45,7 +55,7 @@ router.get("/:id/items", async (req, res) => {
 // -----------------------------------
 // CANCELAR PEDIDO
 // -----------------------------------
-router.put("/cancelar/:id", async (req, res) => {
+router.put("/cancelar/:id", authAdmin, async (req, res) => {
     const { id } = req.params;
 
     try {
@@ -83,7 +93,7 @@ router.put("/cancelar/:id", async (req, res) => {
 // -----------------------------------
 // ELIMINAR PEDIDO
 // -----------------------------------
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authAdmin, async (req, res) => {
     const { id } = req.params;
 
     try {
@@ -101,6 +111,7 @@ router.delete("/:id", async (req, res) => {
 // -----------------------------------
 // CHECKOUT — FINALIZAR COMPRA
 // Guarda SOLO el nombre del cliente
+// PÚBLICO
 // -----------------------------------
 router.post("/checkout", async (req, res) => {
     const { carrito, cliente } = req.body;
