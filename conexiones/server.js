@@ -15,13 +15,6 @@ app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 // Rutas principales
 app.use("/api/productos", productos);
 app.use("/api/clientes", clientes);
-
-// Rutas de productos (Siguen públicas para GET, pero podrías proteger los POST/PUT/DELETE)
-app.use("/api/productos", productos);
-// Rutas de pedidos y clientes (La protección se maneja dentro de cada router ahora)
-app.use("/api/pedidos", pedidosRoutes);
-app.use("/api/clientes", clientes);
-
 app.use((req, res) => {
   res.status(404).json({ error: "Ruta no encontrada" });
 });
