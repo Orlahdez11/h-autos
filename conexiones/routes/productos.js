@@ -1,7 +1,3 @@
-require("dotenv").config(); // 👈 primero
-
-console.log(process.env.CLOUDINARY_CLOUD_NAME); // 👈 aquí
-
 const express = require("express");
 const router = express.Router();
 const db = require("../db");
@@ -109,7 +105,7 @@ router.get("/", async (req, res) => {
 // ===============================
 // 📌 AGREGAR PRODUCTO
 // ===============================
-router.post("/", upload.single("imagen"), async (req, res) => {
+router.post("/", authAdmin, upload.single("imagen"), async (req, res) => {
     let { nombre, descripcion, precio, stock } = req.body;
 
     precio = limpiarPrecio(precio);
