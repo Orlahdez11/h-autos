@@ -3,14 +3,35 @@ const router = express.Router();
 const db = require("../db");
 const multer = require("multer");
 const path = require("path");
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
-// --- CONFIGURAR MULTER (ruta absoluta) ---
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, path.join(__dirname, "..", "..", "uploads")),
-    filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
+// Configuración de Cloudinary (Usa tus credenciales del .env)
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Configurar almacenamiento en la nube
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: "merch_productos", // Nombre de la carpeta en Cloudinary
+        allowed_formats: ["jpg", "png", "jpeg", "webp"]
+    }
 });
 
 const upload = multer({ storage });
+
+// Middleware para proteger acciones sensibles
+const authAdmin = (req, res, next) => {
+    const API_KEY = process.env.ADMIN_API_KEY || "hcars-admin-2024";
+    if (req.headers["x-api-key"] === API_KEY) {
+        return next();
+    }
+    res.status(401).json({ error: "No autorizado" });
+};
 
 // ===============================
 // 🔧 FUNCIÓN PARA LIMPIAR PRECIOS
@@ -84,13 +105,14 @@ router.get("/", async (req, res) => {
 // ===============================
 // 📌 AGREGAR PRODUCTO
 // ===============================
-router.post("/", upload.single("imagen"), async (req, res) => {
+router.post("/", authAdmin, upload.single("imagen"), async (req, res) => {
     let { nombre, descripcion, precio, stock } = req.body;
 
     precio = limpiarPrecio(precio);
     stock = Number(stock);
 
-    const imagen = req.file ? "/uploads/" + req.file.filename : null;
+    // Con Cloudinary, la URL viene en req.file.path
+    const imagen = req.file ? req.file.path : null;
 
     await db.query(
         "INSERT INTO productos (nombre, descripcion, precio, imagen, stock, activo) VALUES ($1,$2,$3,$4,$5, true)",
@@ -103,7 +125,7 @@ router.post("/", upload.single("imagen"), async (req, res) => {
 // ===============================
 // 📌 EDITAR PRODUCTO
 // ===============================
-router.put("/:id", upload.single("imagen"), async (req, res) => {
+router.put("/:id", authAdmin, upload.single("imagen"), async (req, res) => {
     const { id } = req.params;
     let { nombre, descripcion, precio, stock } = req.body;
 
@@ -121,7 +143,7 @@ router.put("/:id", upload.single("imagen"), async (req, res) => {
         }
 
         let imagenFinal = result.rows[0].imagen;
-        if (req.file) imagenFinal = "/uploads/" + req.file.filename;
+        if (req.file) imagenFinal = req.file.path;
 
         await db.query(
             `UPDATE productos 
@@ -141,7 +163,7 @@ router.put("/:id", upload.single("imagen"), async (req, res) => {
 // ===============================
 // 📌 DESACTIVAR PRODUCTO
 // ===============================
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authAdmin, async (req, res) => {
     const { id } = req.params;
 
     try {

@@ -29,6 +29,31 @@ router.get("/", authAdmin, async (req, res) => {
 });
 
 // -----------------------------------
+// OBTENER UN PEDIDO CON SUS ITEMS (Para el Admin)
+// -----------------------------------
+router.get("/:id", authAdmin, async (req, res) => {
+    const { id } = req.params;
+    try {
+        const pedido = await db.query("SELECT * FROM pedidos WHERE id = $1", [id]);
+        if (pedido.rowCount === 0) {
+            return res.status(404).json({ error: "Pedido no encontrado" });
+        }
+
+        const items = await db.query(`
+            SELECT producto_nombre as nombre, cantidad, precio 
+            FROM pedido_items 
+            WHERE pedido_id = $1
+        `, [id]);
+
+        res.json({ ...pedido.rows[0], items: items.rows });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Error al obtener el pedido" });
+    }
+});
+
+// -----------------------------------
 // OBTENER ITEMS DE UN PEDIDO
 // -----------------------------------
 router.get("/:id/items", authAdmin, async (req, res) => {

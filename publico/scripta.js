@@ -1,3 +1,11 @@
+// ===================================================================================
+// 🔐 SEGURIDAD: Verificar Login
+// ===================================================================================
+const API_KEY = localStorage.getItem("adminKey");
+if (!API_KEY) {
+  window.location.href = "login.html";
+}
+
 
 function mostrarToast(mensaje, tipo = "success") {
   const toast = document.getElementById("toastMsg");
@@ -99,6 +107,7 @@ document.getElementById("formAgregar").addEventListener("submit", async (e) => {
 
   const res = await fetch("/api/productos", {
     method: "POST",
+    headers: { "x-api-key": API_KEY },
     body: formData
   });
 
@@ -123,10 +132,15 @@ function eliminarProducto(id) {
 
   const modal = new bootstrap.Modal(document.getElementById("modalConfirmarEliminar"));
   modal.show();
-  document.getElementById("btnConfirmarEliminar").addEventListener("click", async () => {
+}
+
+document.getElementById("btnConfirmarEliminar").onclick = async () => {
   if (!idAEliminar) return;
 
-  await fetch(`/api/productos/${idAEliminar}`, { method: "DELETE" });
+  await fetch(`/api/productos/${idAEliminar}`, { 
+    method: "DELETE",
+    headers: { "x-api-key": API_KEY }
+  });
 
   mostrarToast("Producto desactivado correctamente", "danger");
 
@@ -137,9 +151,7 @@ function eliminarProducto(id) {
   // cerrar modal
   const modal = bootstrap.Modal.getInstance(document.getElementById("modalConfirmarEliminar"));
   modal.hide();
-});
-
-}
+};
 
 
 
@@ -184,6 +196,7 @@ async function guardarEdicion() {
 
   const res = await fetch(`/api/productos/${id}`, {
     method: "PUT",
+    headers: { "x-api-key": API_KEY },
     body: formData
   });
 mostrarToast("Producto actualizado correctamente", "warning");
@@ -199,7 +212,9 @@ mostrarToast("Producto actualizado correctamente", "warning");
 // 🟦 CARGAR PEDIDOS
 // ===================================================================================
 async function cargarPedidos() {
-  const res = await fetch("/api/pedidos");
+  const res = await fetch("/api/pedidos", {
+    headers: { "x-api-key": API_KEY }
+  });
   const pedidos = await res.json();
 
   const tabla = document.querySelector("#tabla-pedidos tbody");
@@ -231,7 +246,9 @@ document.addEventListener("click", async (e) => {
   if (!e.target.classList.contains("btn-ver")) return;
 
   const id = e.target.dataset.id;
-  const res = await fetch(`/api/pedidos/${id}`);
+  const res = await fetch(`/api/pedidos/${id}`, {
+    headers: { "x-api-key": API_KEY }
+  });
   const pedido = await res.json();
 
   const lista = document.getElementById("lista-detalles");
@@ -269,7 +286,8 @@ document.getElementById("btnConfirmarCancelarPedido").addEventListener("click", 
   if (!idCancelar) return;
 
   const res = await fetch(`/api/pedidos/cancelar/${idCancelar}`, {
-    method: "PUT"
+    method: "PUT",
+    headers: { "x-api-key": API_KEY }
   });
 
   const data = await res.json();
@@ -306,7 +324,8 @@ document.getElementById("btnConfirmarEliminarPedido").addEventListener("click", 
   if (!idEliminar) return;
 
   const res = await fetch(`/api/pedidos/${idEliminar}`, {
-    method: "DELETE"
+    method: "DELETE",
+    headers: { "x-api-key": API_KEY }
   });
 
   const data = await res.json();

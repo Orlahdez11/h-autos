@@ -1,5 +1,6 @@
 const express = require("express");
 const productos = require("./routes/productos");
+const pedidosRoutes = require("./routes/pedidos");
 const clientes = require("./routes/clientes");
 const bodyParser = require("body-parser");
 const path = require("path");
@@ -12,9 +13,22 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "..", "publico")));
 app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
+// Endpoint de Login
+app.post("/api/login", (req, res) => {
+  const { password } = req.body;
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123"; // Cambia esto en tu .env
+  const API_KEY = process.env.ADMIN_API_KEY || "hcars-admin-2024";
+
+  if (password === ADMIN_PASSWORD) {
+    return res.json({ success: true, apiKey: API_KEY });
+  }
+  res.status(401).json({ error: "Contraseña incorrecta" });
+});
+
 // Rutas principales
 app.use("/api/productos", productos);
 app.use("/api/clientes", clientes);
+app.use("/api/pedidos", pedidosRoutes);
 app.use((req, res) => {
   res.status(404).json({ error: "Ruta no encontrada" });
 });

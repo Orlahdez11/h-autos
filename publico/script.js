@@ -124,7 +124,6 @@ document.addEventListener("click", async (e) => {
       localStorage.setItem("carrito", JSON.stringify(carrito));
       actualizarCarritoContador();
 
-      await fetch(`/api/productos/restar-stock/${id}`, { method: "PUT" });
       await cargarProductos();
       abrirCarrito();
       mostrarMensaje("Vehículo agregado al carrito 🚗");
@@ -212,10 +211,6 @@ async function eliminar(i) {
   let carrito = JSON.parse(localStorage.getItem("carrito")) || [];
   const item = carrito[i];
   if (!item) return;
-
-  await fetch(`/api/productos/sumar-stock/${item.id}/${item.cantidad}`, {
-    method: "PUT"
-  });
 
   carrito.splice(i, 1);
   localStorage.setItem("carrito", JSON.stringify(carrito));
