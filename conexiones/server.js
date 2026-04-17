@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const productos = require("./routes/productos");
 const pedidosRoutes = require("./routes/pedidos");
@@ -28,8 +29,13 @@ app.post("/api/login", (req, res) => {
 app.use("/api/productos", productos);
 app.use("/api/clientes", clientes);
 app.use("/api/pedidos", pedidosRoutes);
-app.use((req, res) => {
+
+// Manejo de rutas no encontradas (404)
+app.use("/api/*", (req, res) => {
   res.status(404).json({ error: "Ruta no encontrada" });
+});
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "publico", "index.html"));
 });
 
 const PORT = process.env.PORT || 3000;

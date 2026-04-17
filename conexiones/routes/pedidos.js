@@ -4,7 +4,7 @@ const db = require("../db");
 
 // Middleware interno para proteger rutas administrativas
 const authAdmin = (req, res, next) => {
-    const API_KEY = process.env.ADMIN_API_KEY || "hcars-admin-2024";
+    const API_KEY = process.env.ADMIN_API_KEY;
     if (req.headers["x-api-key"] === API_KEY) {
         return next();
     }

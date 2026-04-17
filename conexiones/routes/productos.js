@@ -26,7 +26,7 @@ const upload = multer({ storage });
 
 // Middleware para proteger acciones sensibles
 const authAdmin = (req, res, next) => {
-    const API_KEY = process.env.ADMIN_API_KEY || "hcars-admin-2024";
+    const API_KEY = process.env.ADMIN_API_KEY;
     if (req.headers["x-api-key"] === API_KEY) {
         return next();
     }
@@ -181,7 +181,7 @@ router.delete("/:id", authAdmin, async (req, res) => {
 // ===============================
 // 📌 RESTAR STOCK
 // ===============================
-router.put("/restar-stock/:id", async (req, res) => {
+router.put("/restar-stock/:id", authAdmin, async (req, res) => {
     const { id } = req.params;
 
     try {
@@ -207,7 +207,7 @@ router.put("/restar-stock/:id", async (req, res) => {
 // ===============================
 // 📌 SUMAR STOCK
 // ===============================
-router.put("/sumar-stock/:id/:cantidad", async (req, res) => {
+router.put("/sumar-stock/:id/:cantidad", authAdmin, async (req, res) => {
     const { id, cantidad } = req.params;
 
     try {
