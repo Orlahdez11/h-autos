@@ -2,22 +2,21 @@ const express = require("express");
 const productos = require("./routes/productos");
 const pedidosRoutes = require("./routes/pedidos");
 const clientes = require("./routes/clientes");
-const bodyParser = require("body-parser");
 const path = require("path");
 const cors = require("cors");
 
 const app = express();
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
 app.use(express.static(path.join(__dirname, "..", "publico")));
 app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 // Endpoint de Login
 app.post("/api/login", (req, res) => {
   const { password } = req.body;
-  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123"; // Cambia esto en tu .env
-  const API_KEY = process.env.ADMIN_API_KEY || "hcars-admin-2024";
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD; 
+  const API_KEY = process.env.ADMIN_API_KEY;
 
   if (password === ADMIN_PASSWORD) {
     return res.json({ success: true, apiKey: API_KEY });
