@@ -1,10 +1,18 @@
-require("dotenv").config();
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
 const express = require("express");
 const productos = require("./routes/productos");
 const pedidosRoutes = require("./routes/pedidos");
-const clientes = require("./routes/clientes");
-const path = require("path");
+
+// Cargamos la ruta de clientes de forma segura
+let clientes;
+try {
+  clientes = require("./routes/clientes");
+} catch (e) {
+  console.warn("⚠️ Advertencia: No se encontró el archivo ./routes/clientes.js. Ignorando ruta.");
+}
+
 const cors = require("cors");
 const db = require("./db");
 
@@ -39,17 +47,26 @@ app.post("/api/login", (req, res) => {
 
 // Rutas principales
 app.use("/api/productos", productos);
-app.use("/api/clientes", clientes);
+if (clientes) app.use("/api/clientes", clientes);
 app.use("/api/pedidos", pedidosRoutes);
 
-// Manejo de rutas API no encontradas (debe ir antes del catch-all del frontend)
+// Manejo de rutas API no encontradas
 app.all(/\/api\/.*/, (req, res) => {
   res.status(404).json({ error: "Ruta no encontrada" });
 });
 
-// Frontend (SPA) - Captura cualquier ruta que no sea un archivo estático o API
+// Ruta para el panel de administración
+app.get("/admin", (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "publico", "admin.html"));
+});
+
+// La raíz y cualquier otra ruta cargan el index.html (Página del Cliente)
 app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, "..", "publico", "index.html"));
+  res.sendFile(path.join(__dirname, "..", "publico", "index.html"), (err) => {
+    if (err) {
+      res.status(404).send("Error: El archivo index.html no existe en la carpeta publico.");
+    }
+  });
 });
 
 // Puerto
@@ -68,5 +85,5 @@ app.listen(PORT, () => {
         console.warn("⚠️ Conexión a DB exitosa pero NO se encontraron tablas. ¿Ejecutaste el archivo .sql?");
       }
     })
-    .catch(err => console.error("❌ Error crítico conectando a la base de datos:", err.message));
+    .catch(err => console.error(" Error crítico conectando a la base de datos:", err.message));
 });

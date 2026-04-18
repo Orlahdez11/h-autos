@@ -106,20 +106,25 @@ router.get("/", async (req, res) => {
 // 📌 AGREGAR PRODUCTO
 // ===============================
 router.post("/", authAdmin, upload.single("imagen"), async (req, res) => {
-    let { nombre, descripcion, precio, stock } = req.body;
+    try {
+        let { nombre, descripcion, precio, stock } = req.body;
 
-    precio = limpiarPrecio(precio);
-    stock = Number(stock);
+        precio = limpiarPrecio(precio);
+        stock = Number(stock);
 
-    // Con Cloudinary, la URL viene en req.file.path
-    const imagen = req.file ? req.file.path : null;
+        // Con Cloudinary, la URL viene en req.file.path
+        const imagen = req.file ? req.file.path : null;
 
-    await db.query(
-        "INSERT INTO productos (nombre, descripcion, precio, imagen, stock, activo) VALUES ($1,$2,$3,$4,$5, true)",
-        [nombre, descripcion, precio, imagen, stock]
-    );
+        await db.query(
+            "INSERT INTO productos (nombre, descripcion, precio, imagen, stock, activo) VALUES ($1,$2,$3,$4,$5, true)",
+            [nombre, descripcion, precio, imagen, stock]
+        );
 
-    res.json({ mensaje: "Producto agregado correctamente" });
+        res.json({ mensaje: "Producto agregado correctamente" });
+    } catch (error) {
+        console.error("Error al agregar producto:", error);
+        res.status(500).json({ error: "Error interno al agregar el producto" });
+    }
 });
 
 // ===============================
@@ -229,18 +234,23 @@ router.put("/sumar-stock/:id/:cantidad", authAdmin, async (req, res) => {
 // ===============================
 router.get("/:id", async (req, res) => {
     const { id } = req.params;
-    const result = await db.query(
-        "SELECT id, nombre, descripcion, precio::numeric, imagen, stock, activo FROM productos WHERE id=$1",
-        [id]
-    );
+    try {
+        const result = await db.query(
+            "SELECT id, nombre, descripcion, precio::numeric, imagen, stock, activo FROM productos WHERE id=$1",
+            [id]
+        );
 
-    if (result.rowCount === 0) {
-        return res.status(404).json({ error: "Producto no encontrado" });
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: "Producto no encontrado" });
+        }
+
+        const p = result.rows[0];
+        p.precio = Number(p.precio);
+        res.json(p);
+    } catch (err) {
+        console.error("Error al obtener producto:", err);
+        res.status(500).json({ error: "Error en el servidor" });
     }
-
-    const p = result.rows[0];
-    p.precio = Number(p.precio);
-    res.json(p);
 });
 
 module.exports = router;
