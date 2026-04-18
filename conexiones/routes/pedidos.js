@@ -1,15 +1,7 @@
 const express = require("express"); 
 const router = express.Router();
 const db = require("../db");
-
-// Middleware interno para proteger rutas administrativas
-const authAdmin = (req, res, next) => {
-    const API_KEY = process.env.ADMIN_API_KEY;
-    if (req.headers["x-api-key"] === API_KEY) {
-        return next();
-    }
-    res.status(401).json({ error: "No autorizado" });
-};
+const { authAdmin } = require("../auth");
 
 // -----------------------------------
 // OBTENER TODOS LOS PEDIDOS

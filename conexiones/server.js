@@ -1,4 +1,5 @@
 const path = require("path");
+const fs = require("fs");
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
 const express = require("express");
@@ -29,8 +30,11 @@ if (!process.env.ADMIN_API_KEY) {
 // Middlewares
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "..", "publico")));
-app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
+
+// Definir rutas absolutas para evitar errores en Render
+const publicPath = path.resolve(__dirname, "..", "publico");
+app.use(express.static(publicPath));
+app.use("/uploads", express.static(path.resolve(__dirname, "..", "uploads")));
 
 // Endpoint de Login
 app.post("/api/login", (req, res) => {
@@ -57,14 +61,23 @@ app.all(/\/api\/.*/, (req, res) => {
 
 // Ruta para el panel de administración
 app.get("/admin", (req, res) => {
-  res.sendFile(path.join(__dirname, "..", "publico", "admin.html"));
+  res.sendFile(path.join(publicPath, "admin.html"));
 });
 
-// La raíz y cualquier otra ruta cargan el index.html (Página del Cliente)
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, "..", "publico", "index.html"), (err) => {
+// Ruta catch-all: Cualquier ruta que no sea API o archivos estáticos sirve el index.html
+// Usamos la sintaxis de Express 5 para capturar todo
+app.get(/(.*)/, (req, res) => {
+  const indexPath = path.join(publicPath, "index.html");
+  res.sendFile(indexPath, (err) => {
     if (err) {
-      res.status(404).send("Error: El archivo index.html no existe en la carpeta publico.");
+      console.error(`❌ ERROR DE RUTA: No se pudo enviar index.html desde la ruta: ${indexPath}`);
+      // Esto nos dirá en los logs de Render qué hay realmente en esa carpeta
+      if (fs.existsSync(publicPath)) {
+        console.log("📂 Contenido real de la carpeta publico en el servidor:", fs.readdirSync(publicPath));
+      } else {
+        console.error("⚠️ ADVERTENCIA CRÍTICA: La carpeta 'publico' NO existe en el directorio raíz.");
+      }
+      res.status(404).json({ error: "El frontend no está disponible. Revisa los logs de Render." });
     }
   });
 });

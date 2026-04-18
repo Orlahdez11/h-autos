@@ -5,6 +5,7 @@ const multer = require("multer");
 const path = require("path");
 const cloudinary = require("cloudinary").v2;
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const { authAdmin } = require("../auth");
 
 // Configuración de Cloudinary (Usa tus credenciales del .env)
 cloudinary.config({
@@ -23,15 +24,6 @@ const storage = new CloudinaryStorage({
 });
 
 const upload = multer({ storage });
-
-// Middleware para proteger acciones sensibles
-const authAdmin = (req, res, next) => {
-    const API_KEY = process.env.ADMIN_API_KEY;
-    if (req.headers["x-api-key"] === API_KEY) {
-        return next();
-    }
-    res.status(401).json({ error: "No autorizado" });
-};
 
 // ===============================
 // 🔧 FUNCIÓN PARA LIMPIAR PRECIOS

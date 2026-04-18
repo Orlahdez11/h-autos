@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS productos (
     descripcion TEXT,
     precio NUMERIC(12, 2) NOT NULL DEFAULT 0,
     imagen TEXT,
-    stock INTEGER NOT NULL DEFAULT 0,
+    stock INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
     activo BOOLEAN DEFAULT true,
     creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
