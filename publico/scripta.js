@@ -1,10 +1,25 @@
 // ===================================================================================
 // 🔐 SEGURIDAD: Verificar Login
 // ===================================================================================
-const API_KEY = localStorage.getItem("adminKey");
-if (!API_KEY) {
-  window.location.href = "login.html";
+async function verificarAcceso() {
+  const key = localStorage.getItem("adminKey");
+  if (!key) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  const res = await fetch("/api/auth/verify", {
+    headers: { "x-api-key": key }
+  });
+
+  if (!res.ok) {
+    localStorage.removeItem("adminKey");
+    window.location.href = "login.html";
+  }
 }
+verificarAcceso();
+
+const API_KEY = localStorage.getItem("adminKey");
 
 
 function mostrarToast(mensaje, tipo = "success") {
@@ -110,10 +125,18 @@ document.getElementById("formAgregar").addEventListener("submit", async (e) => {
     headers: { "x-api-key": API_KEY },
     body: formData
   });
-
   const data = await res.json();
 
-mostrarToast(data.mensaje, "success");
+  if (!res.ok) {
+    mostrarToast(data.error || "Error al agregar producto", "danger");
+    if (res.status === 401) {
+      localStorage.removeItem("adminKey");
+      setTimeout(() => window.location.href = "login.html", 2000);
+    }
+    return;
+  }
+
+  mostrarToast(data.mensaje, "success");
 
   e.target.reset();
   cargarTabla();
@@ -137,10 +160,16 @@ function eliminarProducto(id) {
 document.getElementById("btnConfirmarEliminar").onclick = async () => {
   if (!idAEliminar) return;
 
-  await fetch(`/api/productos/${idAEliminar}`, { 
+  const res = await fetch(`/api/productos/${idAEliminar}`, { 
     method: "DELETE",
     headers: { "x-api-key": API_KEY }
   });
+
+  if (!res.ok) {
+    const data = await res.json();
+    mostrarToast(data.error || "Error al eliminar", "danger");
+    return;
+  }
 
   mostrarToast("Producto desactivado correctamente", "danger");
 
@@ -199,8 +228,14 @@ async function guardarEdicion() {
     headers: { "x-api-key": API_KEY },
     body: formData
   });
-mostrarToast("Producto actualizado correctamente", "warning");
 
+  if (!res.ok) {
+    const data = await res.json();
+    mostrarToast(data.error || "Error al actualizar", "danger");
+    return;
+  }
+
+  mostrarToast("Producto actualizado correctamente", "warning");
   cargarTabla();
 
   document.querySelector("#modalEditar .btn-close").click();
@@ -215,7 +250,13 @@ async function cargarPedidos() {
   const res = await fetch("/api/pedidos", {
     headers: { "x-api-key": API_KEY }
   });
+  
   const pedidos = await res.json();
+
+  if (!res.ok) {
+    console.error("Error cargando pedidos:", pedidos.error);
+    return;
+  }
 
   const tabla = document.querySelector("#tabla-pedidos tbody");
   tabla.innerHTML = "";

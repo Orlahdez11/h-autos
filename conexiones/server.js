@@ -4,6 +4,7 @@ require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
 const express = require("express");
 const productos = require("./routes/productos");
+const { authAdmin } = require("./auth");
 const pedidosRoutes = require("./routes/pedidos");
 
 // Cargamos la ruta de clientes de forma segura
@@ -47,6 +48,11 @@ app.post("/api/login", (req, res) => {
   }
 
   res.status(401).json({ error: "Contraseña incorrecta" });
+});
+
+// Endpoint para verificar si la API_KEY es válida
+app.get("/api/auth/verify", authAdmin, (req, res) => {
+  res.json({ valid: true });
 });
 
 // Rutas principales
